@@ -3,16 +3,20 @@ frontend:
   phases:
     preBuild:
       commands:
-        # Use nvm to switch to Node 22
         - nvm install 22
         - nvm use 22
+        - node -v
         - npm install -g bun
         - bun install --frozen-lockfile
     build:
       commands:
-        - bun run build
+        - env | grep -E '^(SUPABASE_|VITE_|DEVELOPER_INVITE_CODE)' > .env
+        - NITRO_PRESET=aws-amplify bun run build
+        - ls -la .amplify-hosting
+        - cat .amplify-hosting/deploy-manifest.json
+        - cp .env .amplify-hosting/compute/default/.env
   artifacts:
-    baseDirectory: dist
+    baseDirectory: .amplify-hosting
     files:
       - '**/*'
   cache:
