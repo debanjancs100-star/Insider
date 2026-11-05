@@ -32,5 +32,6 @@ dist-ssr
 *.sw?
 
 #Example environment variables
-.env.example
+.env.*
+.env
 
