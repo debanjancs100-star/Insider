@@ -1,9 +1,4 @@
-import { WebSocket as NodeWebSocket } from "ws";
-
-if (typeof globalThis.WebSocket === "undefined") {
-  (globalThis as any).WebSocket = NodeWebSocket;
-}
-
+import "./lib/ws-polyfill"; // must stay first
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
