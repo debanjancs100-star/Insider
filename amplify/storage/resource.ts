@@ -11,10 +11,5 @@ export const storage = defineStorage({
       allow.entity('identity').to(['read', 'write', 'delete']),
       allow.groups(['developers', 'admins']).to(['read', 'write', 'delete']),
     ],
-    'media/*': [
-      allow.guest.to(['read']),
-      allow.authenticated.to(['read']),
-      allow.groups(['developers', 'admins']).to(['read', 'write', 'delete']),
-    ],
   }),
 });
