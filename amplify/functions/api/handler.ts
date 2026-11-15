@@ -64,7 +64,7 @@ async function setTier(tier: string, identity: any) {
         tier,
         subscribed: true,
         periodEnd,
-        __typename: 'Subscription',
+        __typename: 'UserSubscription',
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
       },

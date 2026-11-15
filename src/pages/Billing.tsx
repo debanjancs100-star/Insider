@@ -8,7 +8,7 @@ import { PLANS } from '../lib/plans';
 
 export default function Billing() {
   const { sub } = useAuth();
-  const { data: sub_, reload } = useAsync(async () => (await must(await client.models.Subscription.get({ id: sub! }))).data, [sub]);
+  const { data: sub_, reload } = useAsync(async () => (await must(await client.models.UserSubscription.get({ id: sub! }))).data, [sub]);
   const [busy, setBusy] = useState(false);
 
   const choose = async (tier: string) => {

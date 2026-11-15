@@ -15,10 +15,10 @@ const { userPool, userPoolClient } = backend.auth.resources;
 // ---- api: read projects/profiles, write subscriptions ----
 tables['Project'].grantReadData(backend.api.resources.lambda);
 tables['Profile'].grantReadData(backend.api.resources.lambda);
-tables['Subscription'].grantWriteData(backend.api.resources.lambda);
+tables['UserSubscription'].grantWriteData(backend.api.resources.lambda);
 backend.api.addEnvironment('PROJECT_TABLE', tables['Project'].tableName);
 backend.api.addEnvironment('PROFILE_TABLE', tables['Profile'].tableName);
-backend.api.addEnvironment('SUBSCRIPTION_TABLE', tables['Subscription'].tableName);
+backend.api.addEnvironment('SUBSCRIPTION_TABLE', tables['UserSubscription'].tableName);
 
 // ---- invite: manage Cognito groups ----
 backend.invite.resources.lambda.addToRolePolicy(

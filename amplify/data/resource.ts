@@ -51,7 +51,7 @@ const schema = a.schema({
     .authorization((allow) => [allow.groupDefinedIn('ownerGroup')]),
 
   // Written only by the api Lambda. Owner may read.
-  Subscription: a
+  UserSubscription: a
     .model({
       tier: a.string().required(), // explorer | insider | concierge
       subscribed: a.boolean().default(false),
