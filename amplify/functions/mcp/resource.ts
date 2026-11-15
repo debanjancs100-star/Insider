@@ -6,4 +6,5 @@ export const mcp = defineFunction({
   runtime: 20,
   timeoutSeconds: 20,
   memoryMB: 256,
+  resourceGroupName: 'data',
 });

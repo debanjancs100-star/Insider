@@ -11,17 +11,10 @@ import { mcp } from './functions/mcp/resource';
 
 const backend = defineBackend({ auth, data, storage, api, invite, mcp });
 const tables = backend.data.resources.tables;
-const { userPool, userPoolClient, groups } = backend.auth.resources;
+const { userPool, userPoolClient } = backend.auth.resources;
 
-// ---- storage: grant developers & admins read/write to S3 bucket & configure CORS ----
+// ---- storage: configure S3 bucket CORS for 3D models and images ----
 const s3Bucket = backend.storage.resources.bucket;
-if (groups?.['developers']?.role) {
-  s3Bucket.grantReadWrite(groups['developers'].role);
-}
-if (groups?.['admins']?.role) {
-  s3Bucket.grantReadWrite(groups['admins'].role);
-}
-
 const cfnBucket = s3Bucket.node.defaultChild as s3.CfnBucket;
 if (cfnBucket) {
   cfnBucket.corsConfiguration = {
