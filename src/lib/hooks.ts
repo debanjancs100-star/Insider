@@ -20,12 +20,17 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
   return { ...state, reload: run };
 }
 
-/** Short-lived S3 URL for a path under media/. External URLs are deliberately not supported. */
+/** Short-lived S3 URL for a path under media/. Supports http/https fallback. */
 export function useMediaUrl(path?: string | null) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    if (!path || !path.startsWith('media/')) { setUrl(null); return; }
+    if (!path) { setUrl(null); return; }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      setUrl(path);
+      return;
+    }
+    if (!path.startsWith('media/')) { setUrl(null); return; }
     getUrl({ path, options: { expiresIn: 3600 } }).then(
       (r) => live && setUrl(r.url.toString()),
       () => live && setUrl(null),
@@ -40,9 +45,22 @@ export async function uploadMedia(file: File, kind: string, onProgress?: (pct: n
   if (!identityId) throw new Error('You must be signed in to upload.');
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
   const path = `media/${identityId}/${kind}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  let contentType = file.type || undefined;
+  if (!contentType) {
+    if (ext === 'glb') contentType = 'model/gltf-binary';
+    else if (ext === 'gltf') contentType = 'model/gltf+json';
+    else if (ext === 'png') contentType = 'image/png';
+    else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+    else if (ext === 'webp') contentType = 'image/webp';
+    else if (ext === 'svg') contentType = 'image/svg+xml';
+  }
+
   await uploadData({
-    path, data: file, options: {
-      contentType: file.type || undefined,
+    path,
+    data: file,
+    options: {
+      contentType,
       onProgress: ({ transferredBytes, totalBytes }) => totalBytes && onProgress?.(Math.round((transferredBytes / totalBytes) * 100)),
     },
   }).result;

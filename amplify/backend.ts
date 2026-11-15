@@ -1,6 +1,7 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType, HttpMethod } from 'aws-cdk-lib/aws-lambda';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { storage } from './storage/resource';
@@ -10,7 +11,36 @@ import { mcp } from './functions/mcp/resource';
 
 const backend = defineBackend({ auth, data, storage, api, invite, mcp });
 const tables = backend.data.resources.tables;
-const { userPool, userPoolClient } = backend.auth.resources;
+const { userPool, userPoolClient, groups } = backend.auth.resources;
+
+// ---- storage: grant developers & admins read/write to S3 bucket & configure CORS ----
+const s3Bucket = backend.storage.resources.bucket;
+if (groups?.['developers']?.role) {
+  s3Bucket.grantReadWrite(groups['developers'].role);
+}
+if (groups?.['admins']?.role) {
+  s3Bucket.grantReadWrite(groups['admins'].role);
+}
+
+const cfnBucket = s3Bucket.node.defaultChild as s3.CfnBucket;
+if (cfnBucket) {
+  cfnBucket.corsConfiguration = {
+    corsRules: [
+      {
+        allowedHeaders: ['*'],
+        allowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
+        allowedOrigins: ['*'],
+        exposedHeaders: [
+          'x-amz-server-side-encryption',
+          'x-amz-request-id',
+          'x-amz-id-2',
+          'ETag',
+        ],
+        maxAge: 3000,
+      },
+    ],
+  };
+}
 
 // ---- api: read projects/profiles, write subscriptions ----
 tables['Project'].grantReadData(backend.api.resources.lambda);
