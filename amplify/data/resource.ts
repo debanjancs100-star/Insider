@@ -18,11 +18,14 @@ const schema = a.schema({
       website: a.string(),
       contactEmail: a.string(),
       bio: a.string(),
-      verified: a.boolean().default(false).authorization((allow) => [allow.group('admins')]),
+      verified: a.boolean().default(false),
     })
     .identifier(['ownerGroup'])
     .secondaryIndexes((i) => [i('slug').name('bySlug')])
-    .authorization((allow) => [allow.groupDefinedIn('ownerGroup')]),
+    .authorization((allow) => [
+      allow.groupDefinedIn('ownerGroup'),
+      allow.group('admins'),
+    ]),
 
   Project: a
     .model({
