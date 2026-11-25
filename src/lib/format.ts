@@ -7,9 +7,13 @@ const compact = (n: number) => {
 
 export function formatMoneyRange(from: number | null | undefined, to: number | null | undefined, currency = 'USD') {
   const symbol = ({ USD: '$', EUR: '€', GBP: '£' } as Record<string, string>)[currency] ?? `${currency} `;
-  if (from == null && to == null) return 'Contact for pricing';
-  if (from != null && to != null && from !== to) return `${symbol}${compact(from)} — ${symbol}${compact(to)}`;
-  return `From ${symbol}${compact((from ?? to) as number)}`;
+  const f = from == null ? null : Number(from);
+  const t = to == null ? null : Number(to);
+  const validF = f !== null && Number.isFinite(f) ? f : null;
+  const validT = t !== null && Number.isFinite(t) ? t : null;
+  if (validF == null && validT == null) return 'Contact for pricing';
+  if (validF != null && validT != null && validF !== validT) return `${symbol}${compact(validF)} — ${symbol}${compact(validT)}`;
+  return `From ${symbol}${compact((validF ?? validT) as number)}`;
 }
 
 export function formatDate(s: string) {

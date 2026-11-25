@@ -25,7 +25,7 @@ export function useMediaUrl(path?: string | null) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    if (!path) { setUrl(null); return; }
+    if (typeof path !== 'string' || !path) { setUrl(null); return; }
     if (path.startsWith('http://') || path.startsWith('https://')) {
       setUrl(path);
       return;

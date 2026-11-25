@@ -6,7 +6,8 @@ import { useAsync } from '../lib/hooks';
 
 export default function Dashboard() {
   const nav = useNavigate();
-  const { data: projects = [], reload } = useAsync(async () => must(await client.models.Project.list()).data, []);
+  const { data, loading, error, reload } = useAsync(async () => must(await client.models.Project.list()).data ?? [], []);
+  const projects = Array.isArray(data) ? data : [];
 
   const del = async (id: string) => {
     if (!confirm('Delete this listing?')) return;
@@ -29,7 +30,11 @@ export default function Dashboard() {
         <div className="bg-card border border-border p-4 mb-8 text-xs text-muted-foreground">Your developer access is managed by INSIDER. Listings are unlimited and included with your invite.</div>
         <Link to="/profile" className="inline-block mb-8 text-xs uppercase tracking-widest text-muted-foreground hover:text-white transition-colors">→ Edit company profile</Link>
 
-        {projects.length === 0 ? (
+        {error ? (
+          <div className="border border-border p-10 text-center text-sm text-muted-foreground">{error.message}</div>
+        ) : loading ? (
+          <p className="text-center text-muted-foreground p-10 text-xs uppercase tracking-widest">Loading…</p>
+        ) : projects.length === 0 ? (
           <div className="border border-dashed border-border p-16 text-center">
             <p className="text-muted-foreground text-sm mb-6">No listings yet.</p>
             <button onClick={() => nav('/projects/new')} className="px-6 py-3 bg-brand text-white text-xs uppercase tracking-widest font-bold hover:brightness-110 transition-all">Create your first listing</button>

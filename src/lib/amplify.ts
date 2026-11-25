@@ -6,10 +6,11 @@ export const client = generateClient<Schema>();
 
 /** a.json() may arrive as a string (custom ops) or already parsed (model reads). */
 export function parseJson<T>(v: unknown, fallback: T): T {
-  if (typeof v === 'string') {
-    try { return JSON.parse(v) as T; } catch { return fallback; }
+  let cur = v;
+  for (let i = 0; i < 2 && typeof cur === 'string'; i++) {
+    try { cur = JSON.parse(cur); } catch { return fallback; }
   }
-  return (v ?? fallback) as T;
+  return (cur ?? fallback) as T;
 }
 
 /** Throw on GraphQL errors instead of silently succeeding. */
@@ -19,13 +20,18 @@ export function must<T extends { data?: any; errors?: readonly { message: string
 }
 
 async function authMode(): Promise<'userPool' | 'identityPool'> {
-  const s = await fetchAuthSession();
-  return s.tokens ? 'userPool' : 'identityPool';
+  try {
+    const s = await fetchAuthSession();
+    return s.tokens ? 'userPool' : 'identityPool';
+  } catch {
+    return 'identityPool';
+  }
 }
 
 async function op<T>(kind: 'queries' | 'mutations', name: string, args: object = {}, forcePool = false): Promise<T> {
   const mode = forcePool ? 'userPool' : await authMode();
   const res = await (client as any)[kind][name](args, { authMode: mode });
+  if (!res) throw new Error('Empty response from API.');
   if (res.errors?.length) throw new Error(res.errors.map((e: any) => e.message).join('; '));
   return parseJson<T>(res.data, null as T);
 }
@@ -44,9 +50,16 @@ export type ProjectDetail = Omit<Listing, 'developer' | 'developerSlug' | 'devel
 };
 
 export const api = {
-  listPublished: () => op<Listing[]>('queries', 'listPublishedProjects'),
+  listPublished: async () => {
+    const res = await op<Listing[] | null>('queries', 'listPublishedProjects');
+    return Array.isArray(res) ? res : [];
+  },
   getPublished: (slug: string) => op<{ project: ProjectDetail; profile: PublicProfile | null } | null>('queries', 'getPublishedProject', { slug }),
-  getCompany: (slug: string) => op<{ profile: PublicProfile; projects: Listing[] } | null>('queries', 'getCompanyProfile', { slug }),
+  getCompany: async (slug: string) => {
+    const res = await op<{ profile: PublicProfile; projects: Listing[] } | null>('queries', 'getCompanyProfile', { slug });
+    if (!res) return null;
+    return { ...res, projects: Array.isArray(res.projects) ? res.projects : [] };
+  },
   slugAvailable: (kind: 'project' | 'profile', slug: string, exceptId?: string) =>
     op<{ available: boolean; reason?: string }>('queries', 'isSlugAvailable', { kind, slug, exceptId }, true),
   setTier: (tier: string) => op<{ ok: boolean }>('mutations', 'setSubscriptionTier', { tier }, true),

@@ -15,7 +15,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export default function Home() {
-  const { data: projects = [], loading, error } = useAsync(() => api.listPublished(), []);
+  const { data, loading, error } = useAsync(() => api.listPublished(), []);
+  const projects = Array.isArray(data) ? data : [];
   // Real figures derived from the data (the original shipped hard-coded "12" and "8").
   const developers = new Set(projects.map((p) => p.developerSlug ?? p.developer).filter(Boolean)).size;
   const verified = new Set(projects.filter((p) => p.developerVerified).map((p) => p.developerSlug)).size;

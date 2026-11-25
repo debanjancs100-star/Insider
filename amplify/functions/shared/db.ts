@@ -36,7 +36,7 @@ export async function queryAll(table: string, index: string, attr: string, value
 }
 
 export async function profilesFor(table: string, groups: string[]) {
-  const unique = [...new Set(groups)].slice(0, 100);
+  const unique = [...new Set(groups.filter((g): g is string => typeof g === 'string' && g.length > 0))].slice(0, 100);
   const out = new Map<string, any>();
   if (!unique.length) return out;
   const r = await ddb.send(
