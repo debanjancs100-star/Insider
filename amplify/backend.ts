@@ -35,6 +35,17 @@ if (cfnBucket) {
   };
 }
 
+// ---- storage: explicitly grant developers & admins group roles S3 read/write/delete ----
+// defineStorage allow.groups() generates Amplify-managed IAM policies, but those only apply to
+// the Amplify-managed resources. We also need to explicitly attach grants to the Cognito Identity
+// Pool group roles so the browser SDK's presigned URL requests are authorized.
+const developersGroupRole = backend.auth.resources.groups['developers'].role;
+const adminsGroupRole = backend.auth.resources.groups['admins'].role;
+s3Bucket.grantReadWrite(developersGroupRole);
+s3Bucket.grantDelete(developersGroupRole);
+s3Bucket.grantReadWrite(adminsGroupRole);
+s3Bucket.grantDelete(adminsGroupRole);
+
 // ---- api: read projects/profiles (including GSIs), write subscriptions ----
 tables['Project'].grantReadData(backend.api.resources.lambda);
 tables['Profile'].grantReadData(backend.api.resources.lambda);

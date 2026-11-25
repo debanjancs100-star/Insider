@@ -1,8 +1,31 @@
 import { generateClient } from 'aws-amplify/data';
 import { fetchAuthSession } from 'aws-amplify/auth';
+// Ensure Amplify.configure() has been called before this module is used.
+// This side-effect import guarantees the configure module runs first even if
+// bundler evaluation order differs from import order in main.tsx.
+import './configure';
 import type { Schema } from '../../amplify/data/resource';
 
-export const client = generateClient<Schema>();
+// Lazy singleton: generateClient() is deferred until first access so that it
+// is never called before Amplify.configure() completes. A top-level call could
+// throw before the React tree mounts (outside ErrorBoundary), causing black screen.
+let _client: ReturnType<typeof generateClient<Schema>> | null = null;
+function getClient() {
+  if (!_client) {
+    try {
+      _client = generateClient<Schema>();
+    } catch (e) {
+      console.error('generateClient failed:', e);
+      throw e;
+    }
+  }
+  return _client;
+}
+export const client = new Proxy({} as ReturnType<typeof generateClient<Schema>>, {
+  get(_target, prop) {
+    return (getClient() as any)[prop];
+  },
+});
 
 /** a.json() may arrive as a string (custom ops) or already parsed (model reads). */
 export function parseJson<T>(v: unknown, fallback: T): T {
