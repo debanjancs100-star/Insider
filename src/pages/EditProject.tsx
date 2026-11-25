@@ -10,7 +10,7 @@ import { httpUrlError, slugify } from '../lib/format';
 import { useAsync } from '../lib/hooks';
 
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
-const blank = { title: '', slug: '', location: '', description: '', coverPath: null as string | null, modelPath: null as string | null, walkthroughUrl: '', priceFrom: '', priceTo: '', currency: 'USD', unitsTotal: '', unitsRemaining: '', status: 'draft' };
+const blank = { title: '', slug: '', location: '', description: '', coverPath: null as string | null, modelPath: null as string | null, walkthroughUrl: '', priceFrom: '', priceTo: '', currency: 'USD', unitsTotal: '', unitsRemaining: '', status: 'published' };
 
 export default function EditProject() {
   const { id = 'new' } = useParams();

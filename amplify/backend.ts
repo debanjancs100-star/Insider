@@ -35,10 +35,20 @@ if (cfnBucket) {
   };
 }
 
-// ---- api: read projects/profiles, write subscriptions ----
+// ---- api: read projects/profiles (including GSIs), write subscriptions ----
 tables['Project'].grantReadData(backend.api.resources.lambda);
 tables['Profile'].grantReadData(backend.api.resources.lambda);
 tables['UserSubscription'].grantWriteData(backend.api.resources.lambda);
+backend.api.resources.lambda.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['dynamodb:Query', 'dynamodb:Scan', 'dynamodb:GetItem', 'dynamodb:BatchGetItem'],
+    resources: [
+      `${tables['Project'].tableArn}/index/*`,
+      `${tables['Profile'].tableArn}/index/*`,
+    ],
+  }),
+);
 backend.api.addEnvironment('PROJECT_TABLE', tables['Project'].tableName);
 backend.api.addEnvironment('PROFILE_TABLE', tables['Profile'].tableName);
 backend.api.addEnvironment('SUBSCRIPTION_TABLE', tables['UserSubscription'].tableName);
@@ -56,6 +66,16 @@ backend.invite.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 // ---- mcp: public Function URL, bearer JWT verified in code ----
 tables['Project'].grantReadWriteData(backend.mcp.resources.lambda);
 tables['Profile'].grantReadData(backend.mcp.resources.lambda);
+backend.mcp.resources.lambda.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['dynamodb:Query', 'dynamodb:Scan', 'dynamodb:GetItem', 'dynamodb:BatchGetItem'],
+    resources: [
+      `${tables['Project'].tableArn}/index/*`,
+      `${tables['Profile'].tableArn}/index/*`,
+    ],
+  }),
+);
 backend.mcp.addEnvironment('PROJECT_TABLE', tables['Project'].tableName);
 backend.mcp.addEnvironment('PROFILE_TABLE', tables['Profile'].tableName);
 backend.mcp.addEnvironment('USER_POOL_ID', userPool.userPoolId);
