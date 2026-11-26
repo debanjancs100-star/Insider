@@ -55,8 +55,8 @@ export default function EditProject() {
         slug, title: f.title.trim(), location: f.location.trim(), description: f.description.trim(), coverPath: f.coverPath, modelPath: f.modelPath,
         walkthroughUrl: f.walkthroughUrl.trim() || null, priceFrom: pf, priceTo: pt, currency: f.currency.toUpperCase().slice(0, 3),
         unitsTotal: ut === null ? null : Math.trunc(ut), unitsRemaining: ur === null ? null : Math.trunc(ur), status: f.status,
-        milestones: ms.map((m) => ({ label: m.label.trim(), date: m.date })).sort((a, b) => a.date.localeCompare(b.date)),
-        gallery,
+        milestones: JSON.stringify(ms.map((m) => ({ label: m.label.trim(), date: m.date })).sort((a, b) => a.date.localeCompare(b.date))),
+        gallery: JSON.stringify(gallery.map((g) => ({ path: g.path, caption: g.caption.trim() }))),
       };
       // One item, one write: milestones and gallery travel with the project (atomic, unlike delete-then-insert).
       must(isNew ? await client.models.Project.create({ ownerGroup: ownerGroup!, ...body } as any) : await client.models.Project.update({ id, ...body } as any));
