@@ -1,5 +1,5 @@
 import { defineBackend } from '@aws-amplify/backend';
-import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType, HttpMethod } from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { auth } from './auth/resource';
@@ -36,15 +36,31 @@ if (cfnBucket) {
 }
 
 // ---- storage: explicitly grant developers & admins group roles S3 read/write/delete ----
-// defineStorage allow.groups() generates Amplify-managed IAM policies, but those only apply to
-// the Amplify-managed resources. We also need to explicitly attach grants to the Cognito Identity
-// Pool group roles so the browser SDK's presigned URL requests are authorized.
+// Placed in a dedicated stack so auth does not depend on storage (storage already depends on
+// auth via defineStorage's allow.groups(), which would otherwise cause a circular dependency).
+const storageAccessStack = backend.createStack('storage-group-access');
 const developersGroupRole = backend.auth.resources.groups['developers'].role;
 const adminsGroupRole = backend.auth.resources.groups['admins'].role;
-s3Bucket.grantReadWrite(developersGroupRole);
-s3Bucket.grantDelete(developersGroupRole);
-s3Bucket.grantReadWrite(adminsGroupRole);
-s3Bucket.grantDelete(adminsGroupRole);
+new Policy(storageAccessStack, 'DeveloperAdminS3Access', {
+  roles: [developersGroupRole, adminsGroupRole],
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:DeleteObject',
+        's3:ListBucket',
+        's3:AbortMultipartUpload',
+        's3:ListMultipartUploadParts',
+      ],
+      resources: [
+        s3Bucket.bucketArn,
+        `${s3Bucket.bucketArn}/*`,
+      ],
+    }),
+  ],
+});
 
 // ---- api: read projects/profiles (including GSIs), write subscriptions ----
 tables['Project'].grantReadData(backend.api.resources.lambda);
